@@ -179,6 +179,32 @@ it('can auto-dismiss all dialogs', function (): void {
     expect($page->text('#result'))->toBe('false-null');
 });
 
+it('can accept one and dismiss all dialogs', function (): void {
+    Route::get('/', fn (): string => '
+        <button id="multi-btn" onclick="
+            alert(\'First alert\');
+            var confirm_result = confirm(\'Continue?\');
+            var prompt_result = prompt(\'Your name?\');
+            document.getElementById(\'result\').textContent = (confirm_result || \'false\') + \'-\' + (prompt_result || \'null\');
+        ">Show Multiple</button>
+        <div id="result"></div>
+    ');
+
+    $page = visit('/');
+
+    $page->onDialog(function (Dialog $dialog): void {
+        if ($dialog->type() === 'alert') {
+            $dialog->accept();
+        }
+    });
+
+    $page->dismissAllDialogs();
+
+    $page->click('#multi-btn');
+
+    expect($page->text('#result'))->toBe('false-null');
+});
+
 it('can selectively accept only confirm dialogs', function (): void {
     Route::get('/', fn (): string => '
         <button id="mixed-btn" onclick="
