@@ -605,7 +605,7 @@ final class Page
      */
     public function hasDialogHandler(): bool
     {
-        return $this->dialogHandler !== null;
+        return $this->dialogHandler instanceof Closure;
     }
 
     /**
@@ -621,7 +621,7 @@ final class Page
      */
     public function handleDialogEvent(Dialog $dialog): void
     {
-        if ($this->dialogHandler !== null) {
+        if ($this->dialogHandler instanceof Closure) {
             ($this->dialogHandler)($dialog);
         }
     }
