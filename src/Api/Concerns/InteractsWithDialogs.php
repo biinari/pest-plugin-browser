@@ -40,7 +40,7 @@ trait InteractsWithDialogs
     /**
      * Set up automatic dialog acceptance for all future dialogs.
      */
-    public function acceptingDialogs(?string $promptText = null): self
+    public function acceptAllDialogs(?string $promptText = null): self
     {
         $this->page->onDialog(function (Dialog $dialog) use ($promptText) {
             $dialog->accept($promptText);
@@ -52,7 +52,7 @@ trait InteractsWithDialogs
     /**
      * Set up automatic dialog dismissal for all future dialogs.
      */
-    public function dismissingDialogs(): self
+    public function dismissAllDialogs(): self
     {
         $this->page->onDialog(function (Dialog $dialog) {
             $dialog->dismiss();
