@@ -156,7 +156,16 @@ final class Client
      */
     private function handleDialogCreation(string $dialogGuid, array $initializer): void
     {
-        // TODO: Implement dialog handling
+        if ($this->currentPage !== null && $this->currentPage->hasDialogHandler()) {
+            $dialog = new Dialog(
+                $dialogGuid,
+                $initializer['type'],
+                $initializer['message'],
+                $initializer['defaultValue']
+            );
+
+            $this->currentPage->handleDialogEvent($dialog);
+        }
     }
 
     /**
