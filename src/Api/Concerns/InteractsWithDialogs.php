@@ -42,7 +42,7 @@ trait InteractsWithDialogs
      */
     public function acceptAllDialogs(?string $promptText = null): self
     {
-        $this->page->onDialog(function (Dialog $dialog) use ($promptText) {
+        $this->page->onDialog(function (Dialog $dialog) use ($promptText): void {
             $dialog->accept($promptText);
         });
 
@@ -54,7 +54,7 @@ trait InteractsWithDialogs
      */
     public function dismissAllDialogs(): self
     {
-        $this->page->onDialog(function (Dialog $dialog) {
+        $this->page->onDialog(function (Dialog $dialog): void {
             $dialog->dismiss();
         });
 
@@ -66,7 +66,7 @@ trait InteractsWithDialogs
      */
     public function acceptingConfirms(): self
     {
-        $this->page->onDialog(function (Dialog $dialog) {
+        $this->page->onDialog(function (Dialog $dialog): void {
             if ($dialog->type() === 'confirm') {
                 $dialog->accept();
             } else {
@@ -82,7 +82,7 @@ trait InteractsWithDialogs
      */
     public function dismissingConfirms(): self
     {
-        $this->page->onDialog(function (Dialog $dialog) {
+        $this->page->onDialog(function (Dialog $dialog): void {
             if ($dialog->type() === 'confirm') {
                 $dialog->dismiss();
             } else {

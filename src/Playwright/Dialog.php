@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Pest\Browser\Playwright;
 
+use Generator;
 use Pest\Browser\Playwright\Concerns\InteractsWithPlaywright;
 
 /**
  * @internal
  */
-final class Dialog
+final readonly class Dialog
 {
     use InteractsWithPlaywright;
 
@@ -17,10 +18,10 @@ final class Dialog
      * Creates a new dialog instance.
      */
     public function __construct(
-        private readonly string $guid,
-        private readonly string $type,
-        private readonly string $message,
-        private readonly string $defaultValue,
+        private string $guid,
+        private string $type,
+        private string $message,
+        private string $defaultValue,
     ) {
         //
     }
@@ -86,7 +87,7 @@ final class Dialog
      *
      * @param  array<string, mixed>  $params
      */
-    private function sendMessage(string $method, array $params = []): \Generator
+    private function sendMessage(string $method, array $params = []): Generator
     {
         return Client::instance()->execute($this->guid, $method, $params);
     }
