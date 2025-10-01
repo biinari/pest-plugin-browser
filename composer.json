@@ -38,8 +38,6 @@
         }
     },
     "require-dev": {
-        "ext-pcntl": "*",
-        "ext-posix": "*",
         "livewire/livewire": "^3.6.4",
         "nunomaduro/collision": "^8.8.2",
         "orchestra/testbench": "^10.6.0",
