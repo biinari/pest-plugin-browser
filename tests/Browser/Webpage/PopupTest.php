@@ -29,6 +29,23 @@ it('can handle window.open', function (): void {
     expect($page->text('#result'))->toBe('Window opened');
 });
 
+it('can handle link with target', function (): void {
+    Route::get('/', fn (): string => '
+        <a id="popup-link" href="/popup" target="_blank">Open Link in new tab</a>
+    ');
+
+    Route::get('/popup', fn(): string => '
+        <div id="popup-content">Another tab</div>
+    ');
+
+    $page = visit('/');
+
+    $popup = $page->pendingPopup();
+    $page->click('#popup-link');
+
+    $popup->assertSeeIn('#popup-content', 'Another tab');
+});
+
 it('can interact with popup', function (): void {
     Route::get('/', fn (): string => '
         <button id="popup-btn" onclick="window.open(\'/popup\'); document.getElementById(\'result\').textContent = \'Window opened\';">Open Window</button>
