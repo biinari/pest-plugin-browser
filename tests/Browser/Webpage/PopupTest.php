@@ -8,7 +8,10 @@ use PHPUnit\Framework\ExpectationFailedException;
 
 it('can handle window.open', function (): void {
     Route::get('/', fn (): string => '
-        <button id="popup-btn" onclick="window.open(\'/popup\'); document.getElementById(\'result\').textContent = \'Window opened\';">Open Window</button>
+        <button id="popup-btn" onclick="
+            window.open(\'/popup\', \'Popup-target\', \'width=600,height=400\');
+            document.getElementById(\'result\').textContent = \'Window opened\';
+        ">Open Window</button>
         <div id="result"></div>
     ');
 
