@@ -27,6 +27,13 @@ final class Client
     private ?WebsocketConnection $websocketConnection = null;
 
     /**
+     * Registry of Page instances for handling events.
+     *
+     * @var Page[]
+     */
+    private array $pages = [];
+
+    /**
      * Default timeout for requests in milliseconds.
      */
     private int $timeout = 5_000;
@@ -87,8 +94,10 @@ final class Client
         $this->websocketConnection->sendText($requestJson);
 
         while (true) {
+            // @phpstan-ignore-next-line
             $responseJson = $this->fetch($this->websocketConnection);
-            /** @var array{id: string|null, params: array{add: string|null}, error: array{error: array{message: string|null}}} $response */
+
+            /** @var array{id: string|null, guid: string|null, method: string|null, params: array{add: string|null}, error: array{error: array{message: string|null}}} $response */
             $response = json_decode($responseJson, true);
 
             if (isset($response['error']['error']['message'])) {
@@ -99,6 +108,11 @@ final class Client
                 }
 
                 throw new ExpectationFailedException($message);
+            }
+
+            if (isset($response['method']) && $response['method'] === '__dispose__'
+                && isset($response['guid'], $this->pages[$response['guid']])) {
+                $this->unregisterPage($response['guid']);
             }
 
             yield $response;
@@ -126,6 +140,22 @@ final class Client
     public function timeout(): int
     {
         return $this->timeout;
+    }
+
+    /**
+     * Registers the current page for event handling.
+     */
+    public function registerPage(string $guid, Page $page): void
+    {
+        $this->pages[$guid] = $page;
+    }
+
+    /**
+     * Removes page from event handling.
+     */
+    public function unregisterPage(string $guid): void
+    {
+        unset($this->pages[$guid]);
     }
 
     /**

@@ -40,7 +40,7 @@ final class Page
         private readonly string $guid,
         private readonly string $frameGuid,
     ) {
-        //
+        Client::instance()->registerPage($guid, $this);
     }
 
     /**
