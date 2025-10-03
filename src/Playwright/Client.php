@@ -97,7 +97,7 @@ final class Client
             // @phpstan-ignore-next-line
             $responseJson = $this->fetch($this->websocketConnection);
 
-            /** @var array{id: string|null, guid: string|null, method: string|null, params: array{add: string|null}, error: array{error: array{message: string|null}}} $response */
+            /** @var array{id: string|null, guid: string|null, method: string|null, params: array{add: string|null, type: string|null, guid: string|null, initializer: array{mainFrame: array{guid: string}, opener: array{guid: string}}|null }, error: array{error: array{message: string|null}}} $response */
             $response = json_decode($responseJson, true);
 
             if (isset($response['error']['error']['message'])) {
@@ -108,6 +108,12 @@ final class Client
                 }
 
                 throw new ExpectationFailedException($message);
+            }
+
+            if (isset($response['method']) && $response['method'] === '__create__'
+                && isset($response['params']['type']) && $response['params']['type'] === 'Page'
+                && isset($response['guid'], $response['params']['guid'], $response['params']['initializer']['opener']['guid'])) {
+                $this->handlePopupCreation($response['params']['initializer']['opener']['guid'], $response['params']['guid'], $response['params']['initializer']);
             }
 
             if (isset($response['method']) && $response['method'] === '__dispose__'
@@ -156,6 +162,18 @@ final class Client
     public function unregisterPage(string $guid): void
     {
         unset($this->pages[$guid]);
+    }
+
+    /**
+     * Handles popup creation events.
+     *
+     * @param  array{mainFrame: array{guid: string}, opener: array{guid: string}}  $initializer
+     */
+    private function handlePopupCreation(string $openerGuid, string $popupGuid, array $initializer): void
+    {
+        if (isset($this->pages[$openerGuid]) && $this->pages[$openerGuid]->hasPendingPopup()) {
+            $this->pages[$openerGuid]->handlePopupCreation($popupGuid, $initializer['mainFrame']['guid']);
+        }
     }
 
     /**
