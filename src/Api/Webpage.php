@@ -15,6 +15,7 @@ final readonly class Webpage
         Concerns\InteractsWithDialogs,
         Concerns\InteractsWithElements,
         Concerns\InteractsWithFrames,
+        Concerns\InteractsWithPopups,
         Concerns\InteractsWithScreen,
         Concerns\InteractsWithTab,
         Concerns\InteractsWithToolbar,

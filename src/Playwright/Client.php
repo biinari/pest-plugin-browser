@@ -27,9 +27,11 @@ final class Client
     private ?WebsocketConnection $websocketConnection = null;
 
     /**
-     * Current page instance for handling events.
+     * Registry of Page instances for handling events.
+     *
+     * @var Page[]
      */
-    private ?Page $currentPage = null;
+    private array $pages = [];
 
     /**
      * Default timeout for requests in milliseconds.
@@ -95,7 +97,7 @@ final class Client
             // @phpstan-ignore-next-line
             $responseJson = $this->fetch($this->websocketConnection);
 
-            /** @var array{id: string|null, method?: string, params: array{add: string|null, type: string|null, guid: string|null, initializer: array{type: string, message: string, defaultValue: string}|null }, error: array{error: array{message: string|null}}} $response */
+            /** @var array{id: string|null, guid?: string, method?: string, params: array{add: string|null, type: string|null, guid: string|null, initializer: array{type?: string, message?: string, defaultValue?: string, mainFrame?: array{guid: string}, opener?: array{guid: string}}|null }, error: array{error: array{message: string|null}}} $response */
             $response = json_decode($responseJson, true);
 
             if (isset($response['error']['error']['message'])) {
@@ -110,8 +112,19 @@ final class Client
 
             if (isset($response['method']) && $response['method'] === '__create__'
                 && isset($response['params']['type']) && $response['params']['type'] === 'Dialog'
-                && isset($response['params']['guid'], $response['params']['initializer'])) {
-                $this->handleDialogCreation($response['params']['guid'], $response['params']['initializer']);
+                && isset($response['guid'], $response['params']['guid'], $response['params']['initializer'])) {
+                $this->handleDialogCreation($response['guid'], $response['params']['guid'], $response['params']['initializer']);
+            }
+
+            if (isset($response['method']) && $response['method'] === '__create__'
+                && isset($response['params']['type']) && $response['params']['type'] === 'Page'
+                && isset($response['guid'], $response['params']['guid'], $response['params']['initializer']['opener']['guid'])) {
+                $this->handlePopupCreation($response['params']['initializer']['opener']['guid'], $response['params']['guid'], $response['params']['initializer']);
+            }
+
+            if (isset($response['method']) && $response['method'] === '__dispose__'
+                && isset($response['guid'], $this->pages[$response['guid']])) {
+                $this->unregisterPage($response['guid']);
             }
 
             yield $response;
@@ -142,21 +155,30 @@ final class Client
     }
 
     /**
-     * Sets the current page for event handling.
+     * Registers the current page for event handling.
      */
-    public function setCurrentPage(Page $page): void
+    public function registerPage(string $guid, Page $page): void
     {
-        $this->currentPage = $page;
+        $this->pages[$guid] = $page;
+    }
+
+    /**
+     * Removes page from event handling.
+     */
+    public function unregisterPage(string $guid): void
+    {
+        unset($this->pages[$guid]);
     }
 
     /**
      * Handles dialog creation events.
      *
-     * @param  array{type: string, message: string, defaultValue: string}  $initializer
+     * @param  array{type?: string, message?: string, defaultValue?: string, mainFrame?: array{guid: string}, opener?: array{guid: string}}  $initializer
      */
-    private function handleDialogCreation(string $dialogGuid, array $initializer): void
+    private function handleDialogCreation(string $pageGuid, string $dialogGuid, array $initializer): void
     {
-        if ($this->currentPage instanceof Page && $this->currentPage->hasDialogHandler()) {
+        if (isset($this->pages[$pageGuid]) && $this->pages[$pageGuid]->hasDialogHandler()
+            && isset($initializer['type'], $initializer['message'], $initializer['defaultValue'])) {
             $dialog = new Dialog(
                 $dialogGuid,
                 $initializer['type'],
@@ -164,7 +186,20 @@ final class Client
                 $initializer['defaultValue']
             );
 
-            $this->currentPage->handleDialogEvent($dialog);
+            $this->pages[$pageGuid]->handleDialogEvent($dialog);
+        }
+    }
+
+    /**
+     * Handles popup creation events.
+     *
+     * @param  array{type?: string, message?: string, defaultValue?: string, mainFrame?: array{guid: string}, opener?: array{guid: string}}  $initializer
+     */
+    private function handlePopupCreation(string $openerGuid, string $popupGuid, array $initializer): void
+    {
+        if (isset($this->pages[$openerGuid]) && $this->pages[$openerGuid]->hasPendingPopup()
+            && isset($initializer['mainFrame']['guid'])) {
+            $this->pages[$openerGuid]->handlePopupCreation($popupGuid, $initializer['mainFrame']['guid']);
         }
     }
 

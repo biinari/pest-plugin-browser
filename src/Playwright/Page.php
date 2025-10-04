@@ -6,6 +6,7 @@ namespace Pest\Browser\Playwright;
 
 use Closure;
 use Generator;
+use Pest\Browser\Api\PendingAwaitablePopup;
 use Pest\Browser\Execution;
 use Pest\Browser\Support\ImageDiffView;
 use Pest\Browser\Support\JavaScriptSerializer;
@@ -39,6 +40,11 @@ final class Page
     private ?Closure $dialogHandler = null;
 
     /**
+     * Pending AwaitablePage for a Popup.
+     */
+    private ?PendingAwaitablePopup $pendingPopup = null;
+
+    /**
      * Creates a new page instance.
      */
     public function __construct(
@@ -46,7 +52,7 @@ final class Page
         private readonly string $guid,
         private readonly string $frameGuid,
     ) {
-        Client::instance()->setCurrentPage($this);
+        Client::instance()->registerPage($guid, $this);
     }
 
     /**
@@ -625,6 +631,43 @@ final class Page
     {
         if ($this->dialogHandler instanceof Closure) {
             ($this->dialogHandler)($dialog);
+        }
+    }
+
+    /**
+     * Sets up a popup handler for this page.
+     */
+    public function pendingPopup(): PendingAwaitablePopup
+    {
+        $this->pendingPopup = new PendingAwaitablePopup($this);
+
+        return $this->pendingPopup;
+    }
+
+    /**
+     * Removes any previously set popup handler from this page.
+     */
+    public function removePendingPopup(): void
+    {
+        $this->pendingPopup = null;
+    }
+
+    /**
+     * Checks if a popup handler is currently set.
+     */
+    public function hasPendingPopup(): bool
+    {
+        return $this->pendingPopup instanceof PendingAwaitablePopup;
+    }
+
+    /**
+     * Handles a popup creation event from the Playwright server.
+     */
+    public function handlePopupCreation(string $popupGuid, string $frameGuid): void
+    {
+        if ($this->pendingPopup instanceof PendingAwaitablePopup) {
+            $this->pendingPopup->handlePopupCreation($popupGuid, $frameGuid);
+            $this->removePendingPopup();
         }
     }
 
