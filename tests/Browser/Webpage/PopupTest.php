@@ -34,7 +34,7 @@ it('can handle link with target', function (): void {
         <a id="popup-link" href="/popup" target="_blank">Open Link in new tab</a>
     ');
 
-    Route::get('/popup', fn(): string => '
+    Route::get('/popup', fn (): string => '
         <div id="popup-content">Another tab</div>
     ');
 
