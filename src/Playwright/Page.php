@@ -478,8 +478,7 @@ final class Page
     /**
      * Get the console messages at given levels from the page, if any.
      *
-     * @param array<int, string>|string $levels Message levels to filter for ('debug', 'info', 'error', 'warning')
-     *
+     * @param  array<int, string>|string  $levels  Message levels to filter for ('debug', 'info', 'error', 'warning')
      * @return array<int, array{level: string, message: string}>
      */
     public function consoleMessages(array|string $levels = ['info', 'error', 'warning']): array
@@ -487,7 +486,6 @@ final class Page
         $consoleMessages = $this->evaluate('window.__pestBrowser.consoleMessages || []');
 
         /** @var array<int, array{level: string, message: string}> $consoleMessages */
-
         if (is_string($levels)) {
             $checkLevels = [$levels => true];
         } else {
@@ -497,12 +495,10 @@ final class Page
             }
         }
 
-        $messages = array_filter(
+        return array_filter(
             $consoleMessages,
-            fn (array $log) => array_key_exists($log['level'], $checkLevels)
+            fn (array $log): bool => array_key_exists($log['level'], $checkLevels)
         );
-
-        return $messages;
     }
 
     /**
