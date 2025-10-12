@@ -75,7 +75,7 @@ trait MakesConsoleAssertions
     /**
      * Asserts there are no console messages at given levels on the page.
      *
-     * @param array<int, string>|string $levels Console message level(s) to check for (debug, info, error, warning).
+     * @param  array<int, string>|string  $levels  Console message level(s) to check for (debug, info, error, warning).
      */
     public function assertNoConsoleMessages(array|string $levels = ['info', 'error', 'warning']): Webpage
     {
@@ -89,7 +89,7 @@ trait MakesConsoleAssertions
             implode(', ', $levels),
             $this->initialUrl,
             count($messages),
-            implode(', ', array_map(fn (array $log) => "{$log['level']}: {$log['message']}", $messages)),
+            implode(', ', array_map(fn (array $log): string => "{$log['level']}: {$log['message']}", $messages)),
         ));
 
         return $this;
