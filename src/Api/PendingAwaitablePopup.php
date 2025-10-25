@@ -10,7 +10,7 @@ use Pest\Browser\Playwright\Page;
 use PHPUnit\Framework\ExpectationFailedException;
 
 /**
- * @mixin Webpage|AwaitableWebpage
+ * @mixin AwaitableWebpage
  */
 final class PendingAwaitablePopup
 {

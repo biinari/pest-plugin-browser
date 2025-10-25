@@ -8,6 +8,7 @@ use Amp\Websocket\Client\WebsocketConnection;
 use Generator;
 use Pest\Browser\Exceptions\PlaywrightOutdatedException;
 use PHPUnit\Framework\ExpectationFailedException;
+use WeakReference;
 
 use function Amp\Websocket\Client\connect;
 
@@ -29,7 +30,7 @@ final class Client
     /**
      * Registry of Page instances for handling events.
      *
-     * @var Page[]
+     * @var array<string, WeakReference<Page>>
      */
     private array $pages = [];
 
@@ -123,7 +124,7 @@ final class Client
             }
 
             if (isset($response['method']) && $response['method'] === '__dispose__'
-                && isset($response['guid'], $this->pages[$response['guid']])) {
+                && isset($response['guid']) && $this->getPage($response['guid']) instanceof Page) {
                 $this->unregisterPage($response['guid']);
             }
 
@@ -159,7 +160,7 @@ final class Client
      */
     public function registerPage(string $guid, Page $page): void
     {
-        $this->pages[$guid] = $page;
+        $this->pages[$guid] = WeakReference::create($page);
     }
 
     /**
@@ -170,6 +171,15 @@ final class Client
         unset($this->pages[$guid]);
     }
 
+    private function getPage(string $guid): ?Page
+    {
+        if (! array_key_exists($guid, $this->pages)) {
+            return null;
+        }
+
+        return $this->pages[$guid]->get();
+    }
+
     /**
      * Handles dialog creation events.
      *
@@ -177,7 +187,8 @@ final class Client
      */
     private function handleDialogCreation(string $pageGuid, string $dialogGuid, array $initializer): void
     {
-        if (isset($this->pages[$pageGuid]) && $this->pages[$pageGuid]->hasDialogHandler()
+        $page = $this->getPage($pageGuid);
+        if ($page instanceof Page && $page->hasDialogHandler()
             && isset($initializer['type'], $initializer['message'], $initializer['defaultValue'])) {
             $dialog = new Dialog(
                 $dialogGuid,
@@ -186,7 +197,7 @@ final class Client
                 $initializer['defaultValue']
             );
 
-            $this->pages[$pageGuid]->handleDialogEvent($dialog);
+            $page->handleDialogEvent($dialog);
         }
     }
 
@@ -197,9 +208,10 @@ final class Client
      */
     private function handlePopupCreation(string $openerGuid, string $popupGuid, array $initializer): void
     {
-        if (isset($this->pages[$openerGuid]) && $this->pages[$openerGuid]->hasPendingPopup()
+        $opener = $this->getPage($openerGuid);
+        if ($opener instanceof Page && $opener->hasPendingPopup()
             && isset($initializer['mainFrame']['guid'])) {
-            $this->pages[$openerGuid]->handlePopupCreation($popupGuid, $initializer['mainFrame']['guid']);
+            $opener->handlePopupCreation($popupGuid, $initializer['mainFrame']['guid']);
         }
     }
 

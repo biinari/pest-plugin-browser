@@ -159,3 +159,23 @@ it('fails interaction if popup does not open', function (): void {
 
     $popup->click('#no-btn');
 })->throws(ExpectationFailedException::class, 'No popup opened');
+
+it('can check for smoke in popup window', function (): void {
+    Route::get('/', fn (): string => '
+        <button id="popup-btn" onclick="window.open(\'/popup\')">Open Window</button>
+    ');
+
+    Route::get('/popup', fn (): string => '
+        <button id="log-btn" onclick="console.log(\'popped up and logged\');">Log Message</button>
+        <div>Some Content</div>
+    ');
+
+    $page = visit('/');
+
+    $popup = $page->pendingPopup();
+    $page->click('#popup-btn');
+
+    $popup->click('#log-btn');
+
+    $popup->assertNoConsoleLogs();
+})->throws(ExpectationFailedException::class, 'but found 1: popped up and logged');
