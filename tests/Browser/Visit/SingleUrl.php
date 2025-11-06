@@ -65,7 +65,7 @@ it('may visit a page in light/dark mode', function (ColorScheme $scheme): void {
 
     $page = visit('/');
 
-    match ($scheme) {
+    $page = match ($scheme) {
         ColorScheme::DARK => $page->inDarkMode(),
         ColorScheme::LIGHT => $page->inLightMode(),
     };
