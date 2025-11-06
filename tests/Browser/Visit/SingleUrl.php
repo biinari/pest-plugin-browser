@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Route;
 use Pest\Browser\Api\On;
 use Pest\Browser\Api\Webpage;
 use Pest\Browser\Enums\ColorScheme;
@@ -72,6 +73,35 @@ it('may visit a page in light/dark mode', function (ColorScheme $scheme): void {
 
     $page->assertScreenshotMatches();
 })->with(ColorScheme::cases())->onlyOnMac()->skipOnCI();
+
+it('may visit a page with reduced motion', function (): void {
+    Route::get('/', fn (): string => '
+        <html>
+        <head>
+            <style>
+                .animation {
+                    animation: pulse 1s linear infinite both;
+                    background-color: green;
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .animation {
+                        display: none;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <p class="animation">Animated box.</p>
+        </body>
+        </html>
+    ');
+
+    $page = visit('/')
+        ->preferReducedMotion();
+
+    $page->assertMissing('.animation');
+});
 
 it('may visit a page with custom locale and timezone', function (): void {
     Route::get('/', fn (): string => '

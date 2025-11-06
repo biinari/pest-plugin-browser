@@ -7,6 +7,7 @@ namespace Pest\Browser\Api;
 use Pest\Browser\Enums\BrowserType;
 use Pest\Browser\Enums\ColorScheme;
 use Pest\Browser\Enums\Device;
+use Pest\Browser\Enums\ReducedMotion;
 use Pest\Browser\Playwright\InitScript;
 use Pest\Browser\Playwright\Playwright;
 use Pest\Browser\Support\ComputeUrl;
@@ -66,6 +67,17 @@ final class PendingAwaitablePage
     {
         return new self($this->browserType, $this->device, $this->url, [
             'colorScheme' => ColorScheme::LIGHT->value,
+            ...$this->options,
+        ]);
+    }
+
+    /**
+     * Sets media feature prefers-reduced-motion to reduce
+     */
+    public function preferReducedMotion(): self
+    {
+        return new self($this->browserType, $this->device, $this->url, [
+            'reducedMotion' => ReducedMotion::REDUCE->value,
             ...$this->options,
         ]);
     }
